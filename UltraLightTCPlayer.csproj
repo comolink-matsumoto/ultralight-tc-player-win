@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>UltraLight-TC-Player-icon.ico</ApplicationIcon>
+    <AssemblyName>UltraLightTCPlayer</AssemblyName>
+    <Product>UltraLight TC Player for Windows</Product>
+    <Description>Lightweight Windows video player for timecode review and IN/OUT capture.</Description>
+    <Authors>k8gma2mo10</Authors>
+    <Company>k8gma2mo10</Company>
+    <Copyright>Copyright (c) 2026 k8gma2mo10</Copyright>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+</Project>

@@ -7,3 +7,4 @@ sample.mp4
 publish/
 artifacts/
 *.zip
+*.sha256

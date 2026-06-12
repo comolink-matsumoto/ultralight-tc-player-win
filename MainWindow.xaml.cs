@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private bool _isPlaying;
     private bool _isSeeking;
     private bool _isMuted;
+    private int _mediaLoadVersion;
     private double _lastVolume = 0.8;
 
     public MainWindow()
@@ -123,7 +124,6 @@ public partial class MainWindow : Window
             ? FormatTimecode(_duration.Value)
             : "--:--:--:--";
         DropHintText.Visibility = Visibility.Collapsed;
-        Play();
         UpdatePlaybackUi();
     }
 
@@ -241,11 +241,22 @@ public partial class MainWindow : Window
         _inPoint = null;
         _outPoint = null;
         _selectedMarker = MarkerSelection.None;
+        _isPlaying = false;
+        var loadVersion = ++_mediaLoadVersion;
         SeekSlider.Value = 0;
         DurationTimecodeText.Text = "--:--:--:--";
+        PlayPauseButton.Content = "Play";
         Title = $"UltraLight TC Player - {Path.GetFileName(path)}";
         Player.Source = new Uri(path);
         UpdateMarkerUi();
+
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+        {
+            if (loadVersion == _mediaLoadVersion)
+            {
+                Play();
+            }
+        });
     }
 
     private void TogglePlayPause()

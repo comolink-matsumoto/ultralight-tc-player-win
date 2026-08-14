@@ -33,6 +33,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
@@ -170,7 +171,59 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="3" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="Command"
+                           Margin="0,0,8,0"
+                           Foreground="#AAB3BC" />
+                <ComboBox x:Name="CommandModeComboBox"
+                          Width="96"
+                          Height="30"
+                          VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="Cut" />
+                    <ComboBoxItem Content="GIF" />
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel x:Name="GifOptionsPanel"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        Margin="18,0,0,0">
+                <TextBlock Text="GIF FPS"
+                           Margin="0,0,8,0"
+                           Foreground="#AAB3BC" />
+                <TextBox x:Name="GifFpsTextBox"
+                         Width="48"
+                         Height="30"
+                         Text="12"
+                         MaxLength="2"
+                         HorizontalContentAlignment="Right"
+                         VerticalContentAlignment="Center"
+                         FontFamily="Cascadia Mono, Consolas" />
+                <TextBlock Text="Width"
+                           Margin="18,0,8,0"
+                           Foreground="#AAB3BC" />
+                <ComboBox x:Name="GifWidthComboBox"
+                          Width="82"
+                          Height="30"
+                          VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="320" />
+                    <ComboBoxItem Content="480" />
+                    <ComboBoxItem Content="640" />
+                    <ComboBoxItem Content="960" />
+                    <ComboBoxItem Content="1280" />
+                    <ComboBoxItem Content="1920" />
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

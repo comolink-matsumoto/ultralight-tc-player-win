@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -10,6 +11,11 @@ namespace UltraLightTCPlayer;
 
 public partial class MainWindow : Window
 {
+    private const int DefaultGifFps = 12;
+    private const int MinGifFps = 1;
+    private const int MaxGifFps = 30;
+    private const int DefaultGifWidthIndex = 2;
+
     private readonly DispatcherTimer _timer;
     private string? _sourcePath;
     private TimeSpan? _duration;
@@ -26,6 +32,14 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        CommandModeComboBox.SelectedIndex = 0;
+        GifWidthComboBox.SelectedIndex = DefaultGifWidthIndex;
+        CommandModeComboBox.SelectionChanged += CommandOptions_Changed;
+        GifWidthComboBox.SelectionChanged += CommandOptions_Changed;
+        GifFpsTextBox.TextChanged += GifFpsTextBox_TextChanged;
+        GifFpsTextBox.LostFocus += GifFpsTextBox_LostFocus;
+        UpdateCommandOptionsUi();
 
         Player.Volume = VolumeSlider.Value;
 
@@ -229,6 +243,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CommandOptions_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateCommandOptionsUi();
+        UpdateMarkerUi();
+    }
+
+    private void GifFpsTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateMarkerUi();
+    }
+
+    private void GifFpsTextBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        GifFpsTextBox.Text = NormalizeGifFpsText(GifFpsTextBox.Text);
+    }
+
     private void OpenVideo(string path)
     {
         if (!File.Exists(path))
@@ -408,12 +438,24 @@ public partial class MainWindow : Window
 
         if (!_inPoint.HasValue || !_outPoint.HasValue)
         {
-            return ("IN / OUTを設定するとffmpegコマンドを生成します", false);
+            return (GetWaitingCommandMessage(), false);
         }
 
         if (_outPoint.Value <= _inPoint.Value)
         {
             return ("OUTはINより後ろに設定してください", false);
+        }
+
+        return GetSelectedCommandMode() == FfmpegCommandMode.Gif
+            ? BuildGifCommand()
+            : BuildCutCommand();
+    }
+
+    private (string message, bool canCopy) BuildCutCommand()
+    {
+        if (_sourcePath is null || !_inPoint.HasValue || !_outPoint.HasValue)
+        {
+            return (GetWaitingCommandMessage(), false);
         }
 
         var directory = Path.GetDirectoryName(_sourcePath) ?? "";
@@ -423,6 +465,75 @@ public partial class MainWindow : Window
 
         var command = $"ffmpeg -ss {FormatFfmpegTime(_inPoint.Value)} -to {FormatFfmpegTime(_outPoint.Value)} -i \"{EscapePath(_sourcePath)}\" -c copy \"{EscapePath(outputPath)}\"";
         return (command, true);
+    }
+
+    private (string message, bool canCopy) BuildGifCommand()
+    {
+        if (_sourcePath is null || !_inPoint.HasValue || !_outPoint.HasValue)
+        {
+            return (GetWaitingCommandMessage(), false);
+        }
+
+        if (!TryGetGifFps(out var gifFps))
+        {
+            return ($"GIF FPSは{MinGifFps}〜{MaxGifFps}の整数で指定してください", false);
+        }
+
+        if (!TryGetGifWidth(out var gifWidth))
+        {
+            return ("GIF Widthを選択してください", false);
+        }
+
+        var outputPath = Path.ChangeExtension(_sourcePath, ".gif");
+        var filter = $"[0:v]fps={gifFps},scale={gifWidth}:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse";
+        var command = $"ffmpeg -ss {FormatFfmpegTime(_inPoint.Value)} -to {FormatFfmpegTime(_outPoint.Value)} -i \"{EscapePath(_sourcePath)}\" -filter_complex \"{filter}\" -an -loop 0 \"{EscapePath(outputPath)}\"";
+        return (command, true);
+    }
+
+    private void UpdateCommandOptionsUi()
+    {
+        var isGifMode = GetSelectedCommandMode() == FfmpegCommandMode.Gif;
+        GifOptionsPanel.IsEnabled = isGifMode;
+        GifOptionsPanel.Opacity = isGifMode ? 1.0 : 0.55;
+    }
+
+    private string GetWaitingCommandMessage()
+    {
+        return GetSelectedCommandMode() == FfmpegCommandMode.Gif
+            ? "IN / OUTを設定するとGIF生成コマンドを生成します"
+            : "IN / OUTを設定するとffmpegコマンドを生成します";
+    }
+
+    private FfmpegCommandMode GetSelectedCommandMode()
+    {
+        return CommandModeComboBox.SelectedIndex == 1
+            ? FfmpegCommandMode.Gif
+            : FfmpegCommandMode.Cut;
+    }
+
+    private bool TryGetGifFps(out int fps)
+    {
+        return int.TryParse(GifFpsTextBox.Text.Trim(), out fps)
+            && fps >= MinGifFps
+            && fps <= MaxGifFps;
+    }
+
+    private static string NormalizeGifFpsText(string text)
+    {
+        return int.TryParse(text.Trim(), out var fps)
+            ? Math.Clamp(fps, MinGifFps, MaxGifFps).ToString()
+            : DefaultGifFps.ToString();
+    }
+
+    private bool TryGetGifWidth(out int width)
+    {
+        width = 0;
+        if (GifWidthComboBox.SelectedItem is not ComboBoxItem item)
+        {
+            return false;
+        }
+
+        return int.TryParse(item.Content?.ToString(), out width);
     }
 
     private string FormatTimecode(TimeSpan position)
@@ -518,5 +629,11 @@ public partial class MainWindow : Window
         None,
         In,
         Out
+    }
+
+    private enum FfmpegCommandMode
+    {
+        Cut,
+        Gif
     }
 }

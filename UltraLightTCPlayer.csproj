@@ -13,10 +13,10 @@
     <Authors>k8gma2mo10</Authors>
     <Company>k8gma2mo10</Company>
     <Copyright>Copyright (c) 2026 k8gma2mo10</Copyright>
-    <Version>0.1.0</Version>
-    <FileVersion>0.1.0.0</FileVersion>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <InformationalVersion>0.1.0</InformationalVersion>
+    <Version>0.1.1</Version>
+    <FileVersion>0.1.1.0</FileVersion>
+    <AssemblyVersion>0.1.1.0</AssemblyVersion>
+    <InformationalVersion>0.1.1</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PublishSingleFile>true</PublishSingleFile>

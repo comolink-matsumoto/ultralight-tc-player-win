@@ -45,8 +45,9 @@ Windows版では、C# + WPFで以下を実装済みです。
 - `Command` 切替で `Cut` / `GIF` のコマンド生成を切り替え
 - GIF FPS入力に対応。整数 `1` から `30`、初期値は `12`
 - GIF横サイズプルダウンに対応。`320 / 480 / 640 / 960 / 1280 / 1920`、初期値は `640`
+- GIF最大色数入力に対応。整数 `4` から `256`、初期値は `216`
 - IN / OUTが揃った時だけGIF生成用ffmpegコマンドを生成
-- GIF出力ファイル名は `source.gif`
+- GIF出力ファイル名は `source_{colors}.gif`
 
 ## macOS版で目指したいMVP
 
@@ -184,18 +185,18 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -c cop
 IN / OUTが揃った時だけ、通常の切り出しとは別に、以下のようなGIF生成用ffmpegコマンドを生成してコピーできるようにしてください。
 
 ```bash
-ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" -an -loop 0 "/Users/me/Videos/sample.gif"
+ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=216:reserve_transparent=0[p];[b][p]paletteuse" -an -loop 0 "/Users/me/Videos/sample_216.gif"
 ```
 
 仕様:
 
 - 入力ファイルは現在再生中のソースファイルのフルパスを使う
 - 出力ファイルは同じフォルダに作る
-- 出力ファイル名は、元動画名の拡張子だけを `.gif` に変更する
+- 出力ファイル名は、元動画名に最大色数を付けて `.gif` とする
 - `-cut` は付けない
 - 例:
-  - `sample.mp4` -> `sample.gif`
-  - `sample.mov` -> `sample.gif`
+  - `sample.mp4`、最大色数216 -> `sample_216.gif`
+  - `sample.mov`、最大色数128 -> `sample_128.gif`
 - `-n` は付けない
 - `-y` も付けない
 - 同名ファイルが既にある場合の上書き確認は、ffmpeg実行時のプロンプト側に任せる
@@ -204,10 +205,13 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -filte
 - GIF横サイズはプルダウンで指定可能にする
 - GIF横サイズの初期値は `640`
 - GIF横サイズの選択肢は `320 / 480 / 640 / 960 / 1280 / 1920`
+- GIF最大色数は整数 `4` から `256` まで指定可能にする
+- GIF最大色数の初期値は `216`
 - 横動画・縦動画のどちらも、横幅を選択値に固定する
 - 高さはアスペクト比を維持して自動計算し、余白や黒帯は追加しない
 - scale指定は `scale={width}:-2:flags=lanczos` を使う
-- GIF生成は再エンコードのため、FPSや横サイズの指定によって画質とファイルサイズが変わる
+- palettegenには `max_colors={colors}:reserve_transparent=0` を指定する
+- GIF生成は再エンコードのため、FPS、横サイズ、最大色数の指定によって画質とファイルサイズが変わる
 
 ## UI方針
 
@@ -229,6 +233,7 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -filte
 - Copyボタン
 - GIF FPS入力
 - GIF横サイズプルダウン
+- GIF最大色数入力
 
 ## READMEに書いてほしいこと
 
@@ -247,7 +252,7 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "/Users/me/Videos/sample.mp4" -filte
 - VFR動画では誤差が出る可能性がある
 - フレーム送り / 戻しは `1 / fps` 秒シークの目安操作
 - `-c copy` 切り出しはキーフレーム位置の影響で切り出し位置がずれる可能性がある
-- GIF生成は再エンコードのため、FPSや横サイズの指定によって画質とファイルサイズが変わる
+- GIF生成は再エンコードのため、FPS、横サイズ、最大色数の指定によって画質とファイルサイズが変わる
 
 ## 作業の進め方
 

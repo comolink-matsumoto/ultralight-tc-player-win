@@ -15,6 +15,9 @@ public partial class MainWindow : Window
     private const int MinGifFps = 1;
     private const int MaxGifFps = 30;
     private const int DefaultGifWidthIndex = 2;
+    private const int DefaultGifColors = 216;
+    private const int MinGifColors = 4;
+    private const int MaxGifColors = 256;
 
     private readonly DispatcherTimer _timer;
     private string? _sourcePath;
@@ -39,6 +42,8 @@ public partial class MainWindow : Window
         GifWidthComboBox.SelectionChanged += CommandOptions_Changed;
         GifFpsTextBox.TextChanged += GifFpsTextBox_TextChanged;
         GifFpsTextBox.LostFocus += GifFpsTextBox_LostFocus;
+        GifColorsTextBox.TextChanged += GifColorsTextBox_TextChanged;
+        GifColorsTextBox.LostFocus += GifColorsTextBox_LostFocus;
         UpdateCommandOptionsUi();
 
         Player.Volume = VolumeSlider.Value;
@@ -257,6 +262,16 @@ public partial class MainWindow : Window
     private void GifFpsTextBox_LostFocus(object sender, RoutedEventArgs e)
     {
         GifFpsTextBox.Text = NormalizeGifFpsText(GifFpsTextBox.Text);
+    }
+
+    private void GifColorsTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateMarkerUi();
+    }
+
+    private void GifColorsTextBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        GifColorsTextBox.Text = NormalizeGifColorsText(GifColorsTextBox.Text);
     }
 
     private void OpenVideo(string path)
@@ -484,8 +499,15 @@ public partial class MainWindow : Window
             return ("GIF Widthを選択してください", false);
         }
 
-        var outputPath = Path.ChangeExtension(_sourcePath, ".gif");
-        var filter = $"[0:v]fps={gifFps},scale={gifWidth}:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse";
+        if (!TryGetGifColors(out var gifColors))
+        {
+            return ($"GIF Colorsは{MinGifColors}〜{MaxGifColors}の整数で指定してください", false);
+        }
+
+        var directory = Path.GetDirectoryName(_sourcePath) ?? "";
+        var name = Path.GetFileNameWithoutExtension(_sourcePath);
+        var outputPath = Path.Combine(directory, $"{name}_{gifColors}.gif");
+        var filter = $"[0:v]fps={gifFps},scale={gifWidth}:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors={gifColors}:reserve_transparent=0[p];[b][p]paletteuse";
         var command = $"ffmpeg -ss {FormatFfmpegTime(_inPoint.Value)} -to {FormatFfmpegTime(_outPoint.Value)} -i \"{EscapePath(_sourcePath)}\" -filter_complex \"{filter}\" -an -loop 0 \"{EscapePath(outputPath)}\"";
         return (command, true);
     }
@@ -534,6 +556,20 @@ public partial class MainWindow : Window
         }
 
         return int.TryParse(item.Content?.ToString(), out width);
+    }
+
+    private bool TryGetGifColors(out int colors)
+    {
+        return int.TryParse(GifColorsTextBox.Text.Trim(), out colors)
+            && colors >= MinGifColors
+            && colors <= MaxGifColors;
+    }
+
+    private static string NormalizeGifColorsText(string text)
+    {
+        return int.TryParse(text.Trim(), out var colors)
+            ? Math.Clamp(colors, MinGifColors, MaxGifColors).ToString()
+            : DefaultGifColors.ToString();
     }
 
     private string FormatTimecode(TimeSpan position)

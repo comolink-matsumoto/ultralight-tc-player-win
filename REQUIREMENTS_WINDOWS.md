@@ -231,9 +231,9 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -c copy "C:\V
 
 - IN / OUTが揃った時だけ、通常切り出しとは別にGIF生成用ffmpegコマンドを生成できる。
 - アプリ内ではGIF生成を実行せず、既存方針どおりコマンドのコピーまで行う。
-- GIF出力ファイル名は、再生中のソースファイル名から拡張子だけを `.gif` に変更して生成する。
-  - 例: `sample.mp4` -> `sample.gif`
-  - 例: `sample.mov` -> `sample.gif`
+- GIF出力ファイル名は、再生中のソースファイル名に最大色数を付けて `.gif` として生成する。
+  - 例: `sample.mp4`、最大色数216 -> `sample_216.gif`
+  - 例: `sample.mov`、最大色数128 -> `sample_128.gif`
 - GIF生成コマンドには `-n` を付けない。
 - GIF生成コマンドには `-y` も付けない。
 - 同名ファイルが既にある場合の上書き確認は、ffmpeg実行時のプロンプト側に任せる。
@@ -242,14 +242,17 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -c copy "C:\V
 - GIF横サイズはプルダウンで指定できる。
 - GIF横サイズの初期値は `640` とする。
 - GIF横サイズの選択肢は `320 / 480 / 640 / 960 / 1280 / 1920` とする。
+- GIF最大色数は整数 `4` から `256` までを指定できる。
+- GIF最大色数の初期値は `216` とする。
 - 横動画・縦動画のどちらも、横幅を選択値に固定する。
 - 高さはアスペクト比を維持して自動計算し、余白や黒帯は追加しない。
 - scale指定は、アスペクト比維持と偶数高さへの丸めを考慮して `scale={width}:-2:flags=lanczos` を使う。
-- GIF生成は再エンコードのため、`-c copy` の切り出しとは異なり、FPSや横サイズの指定によって画質とファイルサイズが変わる。
+- palettegenには `max_colors={colors}:reserve_transparent=0` を指定する。
+- GIF生成は再エンコードのため、`-c copy` の切り出しとは異なり、FPS、横サイズ、最大色数の指定によって画質とファイルサイズが変わる。
 - コマンド例:
 
 ```powershell
-ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" -an -loop 0 "C:\Videos\sample.gif"
+ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=216:reserve_transparent=0[p];[b][p]paletteuse" -an -loop 0 "C:\Videos\sample_216.gif"
 ```
 
 ## 9. 対応ファイル形式
@@ -296,9 +299,10 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_compl
 - `Clear In` / `Clear Out` / `Clear All` が期待通りに動作するか。
 - IN / OUTが揃った時だけffmpegコマンドが生成され、コピーできるか。
 - 出力ファイル名が `source-cut.ext` として動的に生成されるか。
-- GIF生成コマンドで、出力ファイル名が `source.gif` として動的に生成されるか。
+- GIF生成コマンドで、出力ファイル名が `source_{colors}.gif` として動的に生成されるか。
 - GIF FPSが整数 `1` から `30` までに制限され、初期値が `12` になるか。
 - GIF横サイズが `320 / 480 / 640 / 960 / 1280 / 1920` から選択でき、初期値が `640` になるか。
+- GIF最大色数が整数 `4` から `256` までに制限され、初期値が `216` になるか。
 - GIF生成コマンドで、横動画・縦動画ともに横幅固定、アスペクト比維持、余白なしのscale指定になるか。
 - 音量スライダーとミュートボタンが動作するか。
 - Play / PauseおよびMute / Mutedの表示切り替え時にボタンサイズが変化しないか。
@@ -348,7 +352,8 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_compl
 - IN / OUTが揃った時だけffmpegコマンドが生成され、コピーできる。
 - 出力ファイル名が再生中のソースファイル名から `source-cut.ext` として動的に生成される。
 - IN / OUTが揃った時だけGIF生成コマンドが生成され、コピーできる。
-- GIF出力ファイル名が再生中のソースファイル名から `source.gif` として動的に生成される。
+- GIF出力ファイル名が再生中のソースファイル名と最大色数から `source_{colors}.gif` として動的に生成される。
 - GIF FPSを整数 `1` から `30` まで指定でき、初期値が `12` である。
 - GIF横サイズを `320 / 480 / 640 / 960 / 1280 / 1920` から選択でき、初期値が `640` である。
+- GIF最大色数を整数 `4` から `256` まで指定でき、初期値が `216` である。
 - UIが過度に複雑でなく、動画確認ツールとしてすぐ使える。

@@ -62,6 +62,7 @@ bin\Release\net10.0-windows\win-x64\publish\
 - `Command`: `Cut` / `GIF` のコマンド生成を切り替え
 - `GIF FPS`: GIF生成時のfpsを整数 `1` から `30` で指定。初期値は `12`
 - `Width`: GIF生成時の横サイズを `320 / 480 / 640 / 960 / 1280 / 1920` から選択。初期値は `640`
+- `Colors`: GIF生成時の最大色数を整数 `4` から `256` で指定。初期値は `216`
 - `Copy`: IN / OUTが揃った時に表示中のffmpegコマンドをコピー
 
 ## UI
@@ -84,10 +85,11 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -c copy "C:\V
 
 IN / OUTが揃った時に、通常の切り出しとは別にGIF生成用のffmpegコマンドを生成できます。アプリ内ではGIF生成を実行せず、既存方針どおりコマンドのコピーまで行います。
 
-出力ファイル名は、再生中のソースファイル名から拡張子だけを `.gif` に変更して生成します。
+出力ファイル名は、再生中のソースファイル名に `Colors` の値を付けて `.gif` として生成します。
 
 ```text
-sample.mp4 -> sample.gif
+sample.mp4 -> sample_216.gif
+sample.mp4 -> sample_128.gif
 ```
 
 GIF FPSは整数 `1` から `30` までを指定可能にし、初期値は `12` とします。
@@ -100,8 +102,10 @@ GIFの横サイズはプルダウンで指定します。初期値は `640` で�
 
 横動画・縦動画のどちらも、横幅を選択値に固定します。高さはアスペクト比を維持して自動計算し、余白や黒帯は追加しません。
 
+GIFの最大色数は `Colors` で指定します。初期値は `216` です。`palettegen=max_colors` と出力ファイル名に反映し、透明色は予約しません。
+
 ```powershell
-ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" -an -loop 0 "C:\Videos\sample.gif"
+ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_complex "[0:v]fps=12,scale=640:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=216:reserve_transparent=0[p];[b][p]paletteuse" -an -loop 0 "C:\Videos\sample_216.gif"
 ```
 
 ## 既知の制限
@@ -112,7 +116,7 @@ ffmpeg -ss 00:00:10.000 -to 00:00:25.000 -i "C:\Videos\sample.mp4" -filter_compl
 - VFR動画では表示やフレーム移動に誤差が出る可能性があります。
 - 左右キーのフレーム移動は `1 / fps` 秒ぶんシークする目安操作です。
 - `-c copy` の切り出しは高速・無劣化ですが、キーフレーム位置の都合で切り出し位置が表示位置と少しずれる可能性があります。
-- GIF生成コマンドは再エンコードを行うため、FPSや横サイズの指定によって画質とファイルサイズが変わります。
+- GIF生成コマンドは再エンコードを行うため、FPS、横サイズ、最大色数の指定によって画質とファイルサイズが変わります。
 - MVPではアプリ内でffmpegは実行せず、コマンドのコピーまで行います。
 
 ## ライセンス

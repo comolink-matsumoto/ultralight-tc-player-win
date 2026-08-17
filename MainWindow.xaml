@@ -220,6 +220,17 @@
                     <ComboBoxItem Content="1280" />
                     <ComboBoxItem Content="1920" />
                 </ComboBox>
+                <TextBlock Text="Colors"
+                           Margin="18,0,8,0"
+                           Foreground="#AAB3BC" />
+                <TextBox x:Name="GifColorsTextBox"
+                         Width="54"
+                         Height="30"
+                         Text="216"
+                         MaxLength="3"
+                         HorizontalContentAlignment="Right"
+                         VerticalContentAlignment="Center"
+                         FontFamily="Cascadia Mono, Consolas" />
             </StackPanel>
         </Grid>
 
